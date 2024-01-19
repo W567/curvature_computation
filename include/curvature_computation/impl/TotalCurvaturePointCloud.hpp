@@ -28,7 +28,6 @@ namespace geometry {
 std::vector<int> TotalCurvaturePointCloud::Where(int i, const Eigen::MatrixXi& inArray)
 {
     std::vector<int> res;
-    int idx = 0;
     for (int r = 0; r < inArray.rows(); r++){
       for (int c = 0; c < inArray.cols(); c++){
         if(inArray(r,c) == i){

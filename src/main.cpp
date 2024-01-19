@@ -26,13 +26,13 @@
 
 #include "open3d/Open3D.h"
 #include "curvature_computation/TotalCurvaturePointCloud.h"
+#include <pybind11/pybind11.h>
 
-int main(int argc, char **argv) {
+int curv(std::string filename) {
 
-    std::string filename_v = argv[1];
     // Create an empty PointCloud object
     auto point_cloud_ptr = std::make_shared<open3d::geometry::PointCloud>();
-    open3d::io::ReadPointCloud(filename_v, *point_cloud_ptr);
+    open3d::io::ReadPointCloud(filename, *point_cloud_ptr);
 
     // Get the vertex matrix V from the point cloud
     std::vector<Eigen::Vector3d> points_v = point_cloud_ptr->points_;
@@ -50,4 +50,8 @@ int main(int argc, char **argv) {
     open3d::geometry::TotalCurvaturePointCloud::TotalCurvaturePCD(V_PCD, N_PCD, k_S_PCD, 20);
 
     return 0;
+}
+
+PYBIND11_MODULE(curvature_computation, m) {
+    m.def("curv", &curv, "Get the curvature of a point cloud.");
 }
