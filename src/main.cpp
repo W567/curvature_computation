@@ -65,9 +65,33 @@ Eigen::VectorXd curvFile(std::string filename)
 }
 
 
+std::vector<int> curvFilter(const RowMatrixXd& V_PCD, const RowMatrixXd& N_PCD, double threshold)
+{
+    Eigen::VectorXd k_S_PCD(V_PCD.rows());
+
+    // calculate total curvature on point cloud
+    open3d::geometry::TotalCurvaturePointCloud::TotalCurvaturePCD(V_PCD, N_PCD, k_S_PCD, 20);
+
+    Eigen::VectorXd k_S_PCD_vis = k_S_PCD.array().abs().pow(0.0425);
+    double min_val_pcd = k_S_PCD_vis.minCoeff();
+    double max_val_pcd = k_S_PCD_vis.maxCoeff();
+    double interval = max_val_pcd - min_val_pcd;
+
+    std::vector<int> idxs;
+    for (int i = 0; i < V_PCD.rows(); ++i) {
+        if ((k_S_PCD_vis(i) - min_val_pcd) / interval < threshold) {
+            idxs.push_back(i);
+        }
+    }
+    return idxs;
+}
+
+
 PYBIND11_MODULE(curvature_computation, m) {
     m.def("curv", &curv, "Get the curvature of a point cloud. (Input position and normal matrices)",
           pybind11::return_value_policy::reference_internal);
     m.def("curvFile", &curvFile, "Get the curvature of a point cloud (input FilePath).",
+          pybind11::return_value_policy::reference_internal);
+    m.def("curvFilter", &curvFilter, "Filter cloud based on curvature (input also threshold for filtering).",
           pybind11::return_value_policy::reference_internal);
 }
