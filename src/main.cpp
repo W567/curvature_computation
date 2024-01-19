@@ -27,9 +27,25 @@
 #include "open3d/Open3D.h"
 #include "curvature_computation/TotalCurvaturePointCloud.h"
 #include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
+#include <pybind11/stl.h>
 
-int curv(std::string filename) {
+using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
+
+Eigen::VectorXd curv(const RowMatrixXd& V_PCD, const RowMatrixXd& N_PCD)
+{
+    Eigen::VectorXd k_S_PCD(V_PCD.rows());
+
+    // calculate total curvature on point cloud
+    open3d::geometry::TotalCurvaturePointCloud::TotalCurvaturePCD(V_PCD, N_PCD, k_S_PCD, 20);
+
+    return k_S_PCD;
+}
+
+
+Eigen::VectorXd curvFile(std::string filename)
+{
     // Create an empty PointCloud object
     auto point_cloud_ptr = std::make_shared<open3d::geometry::PointCloud>();
     open3d::io::ReadPointCloud(filename, *point_cloud_ptr);
@@ -37,21 +53,21 @@ int curv(std::string filename) {
     // Get the vertex matrix V from the point cloud
     std::vector<Eigen::Vector3d> points_v = point_cloud_ptr->points_;
     std::vector<Eigen::Vector3d> points_n = point_cloud_ptr->normals_;
-    Eigen::MatrixXd V_PCD(points_v.size(), 3);
-    Eigen::MatrixXd N_PCD(points_v.size(), 3);
-    for (size_t i = 0; i < points_v.size(); ++i) {
+    RowMatrixXd V_PCD(points_v.size(), 3);
+    RowMatrixXd N_PCD(points_v.size(), 3);
+    for (size_t i = 0; i < points_v.size(); ++i)
+    {
         V_PCD.row(i) = points_v[i];
         N_PCD.row(i) = points_n[i];
     }
 
-    Eigen::VectorXd k_S_PCD(V_PCD.rows());
-
-    // calculate total curvature on point cloud
-    open3d::geometry::TotalCurvaturePointCloud::TotalCurvaturePCD(V_PCD, N_PCD, k_S_PCD, 20);
-
-    return 0;
+    return curv(V_PCD, N_PCD);
 }
 
+
 PYBIND11_MODULE(curvature_computation, m) {
-    m.def("curv", &curv, "Get the curvature of a point cloud.");
+    m.def("curv", &curv, "Get the curvature of a point cloud. (Input position and normal matrices)",
+          pybind11::return_value_policy::reference_internal);
+    m.def("curvFile", &curvFile, "Get the curvature of a point cloud (input FilePath).",
+          pybind11::return_value_policy::reference_internal);
 }
