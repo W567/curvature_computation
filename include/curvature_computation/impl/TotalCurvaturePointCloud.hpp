@@ -173,11 +173,11 @@ void TotalCurvaturePointCloud::TotalCurvaturePCD(
   kdtree.SetGeometry(point_cloud);
 
   // Curvature Estimation
-  // #pragma omp parallel for
-  std::vector<int> idx_vec;
-  std::vector<double> distances;
+  #pragma omp parallel for
   for (int i =0; i<V.rows(); i++)
   {
+    std::vector<int> idx_vec;
+    std::vector<double> distances;
     kdtree.SearchKNN(point_cloud.points_[i], K, idx_vec, distances);
     Eigen::MatrixXd knn_locations_including_self = V(idx_vec,Eigen::indexing::all);
     int n_rows = idx_vec.size();
