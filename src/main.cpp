@@ -76,10 +76,13 @@ std::vector<int> curvFilter(const RowMatrixXd& V_PCD, const RowMatrixXd& N_PCD, 
     double min_val_pcd = k_S_PCD_vis.minCoeff();
     double max_val_pcd = k_S_PCD_vis.maxCoeff();
     double interval = max_val_pcd - min_val_pcd;
+    double thre = threshold * interval + min_val_pcd;
 
     std::vector<int> idxs;
-    for (int i = 0; i < V_PCD.rows(); ++i) {
-        if ((k_S_PCD_vis(i) - min_val_pcd) / interval < threshold) {
+    for (int i = 0; i < V_PCD.rows(); ++i)
+    {
+        if (k_S_PCD_vis(i) < thre)
+        {
             idxs.push_back(i);
         }
     }

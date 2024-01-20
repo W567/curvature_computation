@@ -28,9 +28,12 @@ namespace geometry {
 std::vector<int> TotalCurvaturePointCloud::Where(int i, const Eigen::MatrixXi& inArray)
 {
     std::vector<int> res;
-    for (int r = 0; r < inArray.rows(); r++){
-      for (int c = 0; c < inArray.cols(); c++){
-        if(inArray(r,c) == i){
+    for (int r = 0; r < inArray.rows(); r++)
+    {
+      for (int c = 0; c < inArray.cols(); c++)
+      {
+        if(inArray(r,c) == i)
+        {
           res.push_back(r);
         }
       }
@@ -39,16 +42,19 @@ std::vector<int> TotalCurvaturePointCloud::Where(int i, const Eigen::MatrixXi& i
 }
 
 
-std::vector<Eigen::Vector3d> TotalCurvaturePointCloud::MatrixToVector3d(const Eigen::MatrixXd& mat) {
+std::vector<Eigen::Vector3d> TotalCurvaturePointCloud::MatrixToVector3d(const Eigen::MatrixXd& mat)
+{
     std::vector<Eigen::Vector3d> vec(mat.rows());
-    for (int i = 0; i < mat.rows(); ++i) {
+    for (int i = 0; i < mat.rows(); ++i)
+    {
         vec[i] = mat.row(i);
     }
     return vec;
 }
 
 
-bool TotalCurvaturePointCloud::compare_triangles(const Eigen::Vector3i& t1, const Eigen::Vector3i& t2) {
+bool TotalCurvaturePointCloud::compare_triangles(const Eigen::Vector3i& t1, const Eigen::Vector3i& t2)
+{
     int sum_t1 = t1(0) + t1(1) + t1(2);
     int sum_t2 = t2(0) + t2(1) + t2(2);
     return sum_t1 < sum_t2;
@@ -83,7 +89,8 @@ Eigen::MatrixXi TotalCurvaturePointCloud::DelaunayKNN(
 
  
     std::vector<std::pair<K::Point_3, int>> points_with_indices;
-    for (size_t i = 0; i < knn_locations_2d.rows(); ++i) {
+    for (size_t i = 0; i < knn_locations_2d.rows(); ++i)
+    {
         points_with_indices.emplace_back(K::Point_3(knn_locations_2d(i, 0), knn_locations_2d(i, 1), 0.0), i);
     }
 
@@ -93,12 +100,12 @@ Eigen::MatrixXi TotalCurvaturePointCloud::DelaunayKNN(
     Eigen::MatrixXi all_triangles(dt.number_of_faces(), 3);
 
     size_t triangle_index = 0;
-    for (Delaunay::Finite_faces_iterator face = dt.finite_faces_begin(); face != dt.finite_faces_end(); ++face) {
+    for (Delaunay::Finite_faces_iterator face = dt.finite_faces_begin(); face != dt.finite_faces_end(); ++face)
+    {
         Eigen::Vector3i triangle(face->vertex(0)->info(), face->vertex(1)->info(), face->vertex(2)->info());
         all_triangles.row(triangle_index) = triangle;
         triangle_index++;
     }
- 
 
     std::vector<int> adjacent_triangles_mask = TotalCurvaturePointCloud::Where(0, all_triangles);
     adjacent_triangles_idx_local =  all_triangles(adjacent_triangles_mask, Eigen::indexing::all); // 5, 3
@@ -114,17 +121,19 @@ Eigen::MatrixXi TotalCurvaturePointCloud::DelaunayKNN(
 
 
 double TotalCurvaturePointCloud::PerTriangleLaplacianTriangleFanCurvature(
-  const Eigen::MatrixXi& adjacent_triangles_idx, 
-  const Eigen::MatrixXd& V, 
+  const Eigen::MatrixXi& adjacent_triangles_idx,
+  const Eigen::MatrixXd& V,
   const Eigen::MatrixXd& N)
 {
     Eigen::MatrixXd triangle, n_triangle_face, v_triangle_fan, n_triangle_fan, x, y, z;
     Eigen::MatrixXi f(1, 3), adjacent_triangle_idx;
+    f << 0 , 1 , 2;
     Eigen::SparseMatrix<double> l;
     double cx, cy, cz;
     double total_curvature = 0.0, total_area = 0.0;
     int N_triangles = adjacent_triangles_idx.rows();
-    for (int i = 0; i < N_triangles; i++){    
+    for (int i = 0; i < N_triangles; i++)
+    {
       adjacent_triangle_idx = adjacent_triangles_idx(i,Eigen::indexing::all);
       std::vector<int> triangle_verts = {adjacent_triangle_idx(0,0), adjacent_triangle_idx(0,1), adjacent_triangle_idx(0,2)};
       triangle = V(triangle_verts, Eigen::indexing::all); //3, 3
@@ -134,14 +143,13 @@ double TotalCurvaturePointCloud::PerTriangleLaplacianTriangleFanCurvature(
       Eigen::Vector3d AB(AB_mat.coeff(0, 0), AB_mat.coeff(0, 1), AB_mat.coeff(0, 2));
       Eigen::Vector3d AC(AC_mat.coeff(0, 0), AC_mat.coeff(0, 1), AC_mat.coeff(0, 2));
       double triangle_area = 0.5 * sqrt((AB.cross(AC)).squaredNorm());
-      f << 0 , 1 , 2;
       l = CurvatureUtils::CotangentLaplacian(triangle, f);
       x = n_triangle_face(Eigen::indexing::all,0);
       y = n_triangle_face(Eigen::indexing::all,1);
       z = n_triangle_face(Eigen::indexing::all,2);
       cx = (x.transpose() * l * x)(0);
       cy = (y.transpose() * l * y)(0);
-      cz = (z.transpose() * l * z)(0); 
+      cz = (z.transpose() * l * z)(0);
       total_curvature += (- cx - cy - cz);
       total_area += triangle_area;
     }
@@ -151,12 +159,11 @@ double TotalCurvaturePointCloud::PerTriangleLaplacianTriangleFanCurvature(
 
 
 void TotalCurvaturePointCloud::TotalCurvaturePCD(
-  const Eigen::MatrixXd& V, 
-  const Eigen::MatrixXd& N, 
-  Eigen::VectorXd& k_S, 
+  const Eigen::MatrixXd& V,
+  const Eigen::MatrixXd& N,
+  Eigen::VectorXd& k_S,
   int K)
 {
-
   // Convert the Eigen matrix to an Open3D PointCloud
   open3d::geometry::PointCloud point_cloud;
   point_cloud.points_ = TotalCurvaturePointCloud::MatrixToVector3d(V);
@@ -167,15 +174,17 @@ void TotalCurvaturePointCloud::TotalCurvaturePCD(
 
   // Curvature Estimation
   // #pragma omp parallel for
-  for (int i =0; i<V.rows(); i++){
-    std::vector<int> idx_vec;
-    std::vector<double> distances;
+  std::vector<int> idx_vec;
+  std::vector<double> distances;
+  for (int i =0; i<V.rows(); i++)
+  {
     kdtree.SearchKNN(point_cloud.points_[i], K, idx_vec, distances);
     Eigen::MatrixXd knn_locations_including_self = V(idx_vec,Eigen::indexing::all);
     int n_rows = idx_vec.size();
     // Create a column vector of zeros with the same number of rows as idx_vec
     Eigen::MatrixXi idx = Eigen::MatrixXi::Zero(1, n_rows);
-    for (int i = 0; i < n_rows; i++) {
+    for (int i = 0; i < n_rows; i++)
+    {
         idx(0, i) = idx_vec[i];
     }
     Eigen::MatrixXi adjacent_triangles_idx = TotalCurvaturePointCloud::DelaunayKNN(knn_locations_including_self, idx);
