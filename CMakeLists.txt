@@ -1,6 +1,7 @@
 # On Ubuntu 18.04, get the latest CMake from https://apt.kitware.com/.
 cmake_minimum_required(VERSION 3.18)
 
+set(CMAKE_BUILD_TYPE Release)
 project(curvature_computation LANGUAGES C CXX)
 
 # The options need to be the same as Open3D's default
