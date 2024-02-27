@@ -40,6 +40,8 @@ Compile this project from scratch using the standard cmake routine (make sure th
     cd build
     cmake ..
     make
+    # to install curvature_computation as a python package
+    sudo make install
 
 ## Citation
 
