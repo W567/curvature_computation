@@ -28,6 +28,8 @@ include(${CGAL_USE_FILE})
 
 find_package(pybind11 REQUIRED)
 
+find_package(CUDA REQUIRED)
+
 include_directories(include)
 
 pybind11_add_module(curvature_computation src/main.cpp)
@@ -36,7 +38,8 @@ target_link_libraries(curvature_computation
   PRIVATE Open3D::Open3D
   PRIVATE OpenMP::OpenMP_CXX
   PRIVATE ${CGAL_LIBRARIES}
-  PRIVATE pybind11::module)
+  PRIVATE pybind11::module
+  PRIVATE CUDA::cudart)
 
 # On Windows if BUILD_SHARED_LIBS is enabled, copy .dll files to the executable directory
 if(WIN32)
